@@ -918,35 +918,36 @@ namespace HsMod
                 }
             }
 
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(DeckPickerTrayDisplay), "OnCustomDeckPressed")]
-            private static bool PatchOnCustomDeckPressed(DeckPickerTrayDisplay __instance,
-                ref CollectionDeckBoxVisual deckbox)
-            {
-                if (!checkCollDeckValidForMode.Value)
-                {
-                    return true;
-                }
+            // fixme: no ShowClickedStandardDeckInTwistPopup
+            //[HarmonyPrefix]
+            //[HarmonyPatch(typeof(DeckPickerTrayDisplay), "OnCustomDeckPressed")]
+            //private static bool PatchOnCustomDeckPressed(DeckPickerTrayDisplay __instance,
+            //    ref CollectionDeckBoxVisual deckbox)
+            //{
+            //    if (!checkCollDeckValidForMode.Value)
+            //    {
+            //        return true;
+            //    }
 
-                if (SceneMgr.Get().GetMode() == SceneMgr.Mode.TOURNAMENT && Options.GetInRankedPlayMode())
-                {
-                    CollectionDeck collectionDeck = deckbox.GetCollectionDeck();
-                    if (collectionDeck == null)
-                    {
-                        return true;
-                    }
+            //    if (SceneMgr.Get().GetMode() == SceneMgr.Mode.TOURNAMENT && Options.GetInRankedPlayMode())
+            //    {
+            //        CollectionDeck collectionDeck = deckbox.GetCollectionDeck();
+            //        if (collectionDeck == null)
+            //        {
+            //            return true;
+            //        }
 
-                    // 如果选择的是标准卡组，且当前模式是狂野模式，则给出提示，防止误触
-                    if (collectionDeck.FormatType == PegasusShared.FormatType.FT_STANDARD &&
-                        (int)Options.GetFormatType() == 1)
-                    {
-                        __instance.ShowClickedStandardDeckInTwistPopup();
-                        return false;
-                    }
-                }
+            //        // 如果选择的是标准卡组，且当前模式是狂野模式，则给出提示，防止误触
+            //        if (collectionDeck.FormatType == PegasusShared.FormatType.FT_STANDARD &&
+            //            (int)Options.GetFormatType() == 1)
+            //        {
+            //            __instance.ShowClickedStandardDeckInTwistPopup();
+            //            return false;
+            //        }
+            //    }
 
-                return true;
-            }
+            //    return true;
+            //}
 
             [HarmonyPrefix]
             [HarmonyPatch(typeof(CollectionDeckBoxVisual), "CanSelectDeck")]
@@ -1042,7 +1043,12 @@ namespace HsMod
                 return list;
             }
 
-
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(Log), "ConfigureLogSystem")]
+            private static void PatchConfigureLogSystem()
+            {
+                Log.SetStandardLogInfo("LoadingScreen", Blizzard.T5.Logging.LogLevel.Debug);
+            }
         }
 
         public class PatchBoxesReward
@@ -1158,30 +1164,30 @@ namespace HsMod
 
         public class PatchRealtimeCardNum
         {
-            //显示卡牌数量 或||控制暂时有问题，需要进行delegate委托
-            [HarmonyTranspiler]
-            [HarmonyPatch(typeof(CollectionCardCount), "UpdateVisibility")]
-            public static IEnumerable<CodeInstruction> PatchCollectionCardCountUpdateVisibility(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-            {
-                List<CodeInstruction> list = new List<CodeInstruction>(instructions);
-                int num = 0;
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i].opcode == OpCodes.Ldc_I4_S && (sbyte)list[i].operand == 10)
-                    {
-                        num = i;
-                        break;
-                    }
-                }
-                num--;
-                if (num > 0)
-                {
-                    list[num] = new CodeInstruction(OpCodes.Call, new Func<ConfigValue>(ConfigValue.Get).Method);
-                    list[num + 1] = new CodeInstruction(OpCodes.Callvirt, typeof(ConfigValue).GetProperty("IsShowCardLargeCountValue", BindingFlags.Instance | BindingFlags.Public).GetGetMethod());
-                    list[num + 2] = new CodeInstruction(OpCodes.Brfalse_S, list[num + 2].operand);
-                }
-                return list;
-            }
+            //todo: fixme: 显示卡牌数量 或||控制暂时有问题，需要进行delegate委托
+            //[HarmonyTranspiler]
+            //[HarmonyPatch(typeof(CollectionCardCount), "UpdateVisibility")]
+            //public static IEnumerable<CodeInstruction> PatchCollectionCardCountUpdateVisibility(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+            //{
+            //    List<CodeInstruction> list = new List<CodeInstruction>(instructions);
+            //    int num = 0;
+            //    for (int i = 0; i < list.Count; i++)
+            //    {
+            //        if (list[i].opcode == OpCodes.Ldc_I4_S && (sbyte)list[i].operand == 10)
+            //        {
+            //            num = i;
+            //            break;
+            //        }
+            //    }
+            //    num--;
+            //    if (num > 0)
+            //    {
+            //        list[num] = new CodeInstruction(OpCodes.Call, new Func<ConfigValue>(ConfigValue.Get).Method);
+            //        list[num + 1] = new CodeInstruction(OpCodes.Callvirt, typeof(ConfigValue).GetProperty("IsShowCardLargeCountValue", BindingFlags.Instance | BindingFlags.Public).GetGetMethod());
+            //        list[num + 2] = new CodeInstruction(OpCodes.Brfalse_S, list[num + 2].operand);
+            //    }
+            //    return list;
+            //}
         }
 
         public class PatchDeckShareCode
